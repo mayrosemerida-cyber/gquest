@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GEO QUEST</title>
+<style>
+  :root{
+    --bg-deep:#0E1226;
+    --bg-panel:#161B36;
+    --bg-panel-2:#1D2348;
+    --line:#323A66;
+    --ink:#F2F3FA;
+    --ink-dim:#9AA1C4;
+    --cyan:#3FE0D0;
+    --magenta:#FF5D8F;
+    --amber:#FFC857;
+    --coral:#FF6B5B;
+    --green:#6BE38A;
+    --shadow: 0 12px 30px rgba(0,0,0,.35);
+    --radius: 14px;
+    font-size: 16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100%;
+    background:
+      radial-gradient(1200px 700px at 12% -12%, #FFD54A 0%, transparent 46%),
+      radial-gradient(1000px 650px at 108% 6%, #2F6FED 0%, transparent 55%),
+      radial-gradient(900px 550px at 40% 110%, #1948C4 0%, transparent 50%),
+      linear-gradient(160deg, #0B1B4D 0%, #123A8C 45%, #0B1B4D 100%);
+    position:relative;
+    color:var(--ink);
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 28px 14px 60px;
+  }
+  body.in-game{ padding: 14px 12px 14px; overflow:hidden; }
+
+  /* decorative geometric figures scattered across the pre-game background */
+  .page-figures{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+  .pf{ position:absolute; opacity:.3; filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); animation: floatShape 9s ease-in-out infinite; }
+  .pf1{ width:76px; top:6%;  left:4%;  animation-duration:9.5s; }
+  .pf2{ width:52px; top:72%; left:7%;  animation-duration:10.8s; animation-delay:.5s; }
+  .pf3{ width:64px; top:12%; left:88%; animation-duration:8.6s;  animation-delay:.3s; }
+  .pf4{ width:58px; top:80%; left:90%; animation-duration:10.2s; animation-delay:1s; }
+  .pf5{ width:42px; top:42%; left:2%;  animation-duration:11.4s; animation-delay:.8s; }
+  .pf6{ width:48px; top:52%; left:94%; animation-duration:9.3s;  animation-delay:.2s; }
+  .pf7{ width:40px; top:2%;  left:46%; animation-duration:10.6s; animation-delay:1.3s; }
+  .display{
+    font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+    font-weight:800;
+    letter-spacing: 0.3px;
+  }
+  #app{
+    width:100%;
+    max-width: 960px;
+  }
+  .screen{ display:none; }
+  .screen.active{ display:block; animation: popIn .55s cubic-bezier(.22,1,.36,1); }
+  @keyframes popIn{
+    0%{ opacity:0; transform:translateY(16px) scale(.965); }
+    65%{ opacity:1; }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  @keyframes shakeX{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-9px); }
+    40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-6px); }
+    80%{ transform:translateX(5px); }
+  }
+  .shake{ animation: shakeX .45s ease; }
+
+  .confetti-container{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:999; }
+  .confetti-piece{
+    position:absolute; top:-14px; width:8px; height:14px; opacity:.95; border-radius:2px;
+    animation-name: confettiFall; animation-timing-function: cubic-bezier(.35,0,.65,1); animation-fill-mode: forwards;
+  }
+  @keyframes confettiFall{
+    0%{ transform: translateY(0) rotate(0deg); opacity:1; }
+    85%{ opacity:1; }
+    100%{ transform: translateY(105vh) rotate(420deg); opacity:0; }
+  }
+
+  footer.foot{ text-align:center; color:var(--ink-dim); font-size:.75rem; margin-top:40px; line-height:1.7; }
+  footer.foot .credits{ display:inline-block; margin-top:2px; color:#6d75a3; }
+
+  /* ---------- shape motif divider ---------- */
+  .shape-row{ display:flex; gap:10px; align-items:center; justify-content:center; margin: 6px 0 2px; }
+  .shape-row svg{ display:block; }
+
+  /* ---------- Colorful animated banner ---------- */
+  .banner{
+    position:relative;
+    overflow:hidden;
+    border-radius: 26px;
+    margin: 4px 0 8px;
+    background:
+      radial-gradient(120% 140% at 15% 10%, #1B3E9C 0%, transparent 55%),
+      radial-gradient(120% 140% at 85% 0%, #F5B800 0%, transparent 50%),
+      linear-gradient(135deg, #0B1F57 0%, #14328C 35%, #1B4FC4 65%, #0B1F57 100%);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  .banner-glow{
+    position:absolute; border-radius:50%; filter: blur(50px); opacity:.55;
+    animation: driftGlow 14s ease-in-out infinite alternate;
+  }
+  .banner-glow.g1{ width:220px; height:220px; background:#FFD54A; top:-60px; left:-40px; animation-delay:0s; }
+  .banner-glow.g2{ width:260px; height:260px; background:#2F6FED; bottom:-90px; right:-50px; animation-delay:2s; }
+  .banner-glow.g3{ width:190px; height:190px; background:#FFE066; top:40%; left:50%; animation-delay:4s; }
+  @keyframes driftGlow{
+    0%{ transform: translate(0,0) scale(1); }
+    50%{ transform: translate(24px,-18px) scale(1.12); }
+    100%{ transform: translate(-18px,14px) scale(0.95); }
+  }
+  .banner-shapes{ position:absolute; inset:0; pointer-events:none; }
+  .fshape{ position:absolute; width:34px; height:34px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); animation: floatShape 6s ease-in-out infinite; }
+  .fshape.f1{ top:12%; left:8%;  width:30px; animation-duration:6.5s; }
+  .fshape.f2{ top:68%; left:14%; width:26px; animation-duration:7.2s; animation-delay:.4s; }
+  .fshape.f3{ top:20%; left:88%; width:28px; animation-duration:5.8s; animation-delay:.9s; }
+  .fshape.f4{ top:74%; left:90%; width:24px; animation-duration:6.8s; animation-delay:.2s; }
+  .fshape.f5{ top:8%;  left:48%; width:22px; animation-duration:7.5s; animation-delay:1.2s; }
+  .fshape.f6{ top:82%; left:52%; width:20px; animation-duration:6.2s; animation-delay:.6s; }
+  .fshape.f7{ top:44%; left:4%;  width:22px; animation-duration:7.8s; animation-delay:1.6s; }
+  @keyframes floatShape{
+    0%,100%{ transform: translateY(0) rotate(0deg); }
+    50%{ transform: translateY(-16px) rotate(14deg); }
+  }
+  .board-sub{ text-align:center; color:var(--ink-dim); font-size:.82rem; margin: -2px 0 12px; }
+
+  /* ---------- Title screen ---------- */
+  .hero{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding: 34px 16px 30px;
+  }
+  .hero h1{
+    font-size: clamp(2.6rem, 8vw, 4.6rem);
+    margin: 6px 0 2px;
+    line-height:1;
+    background: linear-gradient(100deg, #FFD54A 0%, #FFFFFF 25%, #5B9CFF 50%, #FFD54A 75%, #FFFFFF 100%);
+    background-size: 300% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation: shimmerTitle 7s linear infinite, titlePop .7s cubic-bezier(.22,1.4,.36,1);
+  }
+  @keyframes shimmerTitle{
+    0%{ background-position: 0% 50%; }
+    100%{ background-position: 300% 50%; }
+  }
+  @keyframes titlePop{
+    0%{ transform: scale(.85); opacity:0; }
+    60%{ transform: scale(1.04); opacity:1; }
+    100%{ transform: scale(1); }
+  }
+  .hero p.tagline{
+    color:var(--ink-dim);
+    font-size:1.02rem;
+    margin: 0 auto 18px;
+    max-width: 480px;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:700;
+    font-size:1rem;
+    padding: 14px 30px;
+    border-radius: 999px;
+    color:#0E1226;
+    background: linear-gradient(95deg, var(--cyan), var(--green));
+    box-shadow: var(--shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ transform: translateY(-2px); box-shadow: 0 16px 34px rgba(0,0,0,.4); }
+  .btn:active{ transform: translateY(0); }
+  .btn.secondary{
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    box-shadow:none;
+  }
+  .btn.secondary:hover{ border-color: var(--cyan); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+  .panel{
+    background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .board-wrap{ max-width: 620px; margin: 26px auto 0; }
+  .board-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .board-head h2{ margin:0; font-size:1.05rem; letter-spacing:.4px; }
+  .board-head .pulse{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--green);
+    display:inline-block; margin-right:8px;
+    box-shadow: 0 0 0 0 rgba(107,227,138,.6);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(107,227,138,.55); }
+    70%{ box-shadow: 0 0 0 10px rgba(107,227,138,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(107,227,138,0); }
+  }
+  table.board{ width:100%; border-collapse: collapse; font-size:.92rem; }
+  table.board th{
+    text-align:left; color:var(--ink-dim); font-weight:600;
+    padding: 6px 8px; border-bottom:1px solid var(--line); font-size:.78rem;
+  }
+  table.board td{ padding: 9px 8px; border-bottom: 1px solid rgba(50,58,102,.5); }
+  table.board tr:last-child td{ border-bottom:none; }
+  table.board td.rank{ color:var(--amber); font-weight:800; width: 30px; }
+  table.board td.score{ text-align:right; font-weight:800; color:var(--cyan); }
+  table.board td.lvl{ color:var(--ink-dim); font-size:.78rem; }
+  .board-empty{ color:var(--ink-dim); text-align:center; padding: 22px 8px; font-size:.92rem; }
+
+  .center-actions{ text-align:center; margin-top: 22px; }
+
+  /* ---------- Player info screen ---------- */
+  .form-panel{ max-width:440px; margin: 20px auto 0; }
+  .form-panel h2{ margin-top:0; font-size:1.3rem; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:.82rem; color:var(--ink-dim); margin-bottom:6px; }
+  .field input{
+    width:100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: #0F1330;
+    color: var(--ink);
+    font-size: 1rem;
+    font-family:inherit;
+  }
+  .field input:focus{ outline:none; border-color: var(--cyan); }
+  .hint-err{ color: var(--coral); font-size:.8rem; min-height: 1.1em; margin-top:4px; }
+
+  /* ---------- Level select ---------- */
+  .levels{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; max-width: 640px; margin: 20px auto 0; }
+  @media (max-width:560px){ .levels{ grid-template-columns:1fr; } }
+  .level-card{
+    text-align:left;
+    padding:20px;
+    border-radius: var(--radius);
+    border:1.5px solid var(--line);
+    background: var(--bg-panel);
+    cursor:pointer;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .level-card:hover{ transform: translateY(-3px); border-color: var(--cyan); }
+  .level-card h3{ margin: 4px 0 6px; font-size:1.25rem; }
+  .level-card .tag{
+    display:inline-block; font-size:.72rem; font-weight:700; padding:3px 10px;
+    border-radius:999px; margin-bottom:8px;
+  }
+  .level-card.easy .tag{ background: rgba(107,227,138,.15); color: var(--green); }
+  .level-card.hard .tag{ background: rgba(255,93,143,.15); color: var(--magenta); }
+  .level-card ul{ margin:8px 0 0; padding-left:18px; color:var(--ink-dim); font-size:.86rem; line-height:1.6; }
+  .level-card.locked{ opacity:.6; cursor:not-allowed; position:relative; }
+  .level-card.locked:hover{ transform:none; border-color:var(--line); }
+  .level-card.locked::after{
+    content:"🔒"; position:absolute; top:16px; right:16px; font-size:1.15rem;
+  }
+  .lock-note{ margin:10px 0 0; font-size:.78rem; color:var(--ink-dim); }
+  .level-card:not(.locked) .lock-note{ color: var(--green); }
+
+  /* ---------- Game screen (true fullscreen — never needs page scroll) ---------- */
+  #screen-game.active{
+    position:fixed; inset:0; z-index:25;
+    display:flex; flex-direction:column;
+    background: var(--bg-deep);
+    padding: 10px 12px;
+    overflow:hidden;
+  }
+  #screen-game.active .game-wrap{
+    max-width:none; width:100%; height:100%; margin:0;
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .game-wrap{ max-width: min(1400px, 96vw); margin:0 auto; }
+  .hud{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
+    margin-bottom:8px; font-size:.86rem;
+    flex: 0 0 auto;
+  }
+  .hud .who{ color:var(--ink-dim); }
+  .hud .who b{ color:var(--ink); }
+  .hud-stats{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .hud-chip{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:10px;
+    padding:6px 12px; display:flex; align-items:center; gap:6px;
+  }
+  .hud-chip b{ color:var(--amber); }
+  .lives{ display:flex; gap:4px; }
+  .life-dot{ width:11px; height:11px; border-radius:50%; background: var(--magenta); }
+  .life-dot.lost{ background: rgba(255,255,255,.12); }
+
+  #canvasHolder{
+    position:relative;
+    border-radius: var(--radius);
+    overflow:hidden;
+    border:1px solid var(--line);
+    box-shadow: var(--shadow);
+    background: linear-gradient(180deg, #16204a 0%, #0d112a 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex: 1 1 auto;
+    min-height:0;
+    width:100%;
+  }
+  #gameCanvas{ display:block; touch-action:none; }
+  .canvas-hint{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    background:rgba(10,13,30,.55); border:1px solid var(--line);
+    padding:5px 14px; border-radius:999px; font-size:.76rem; color:var(--ink-dim);
+    pointer-events:none;
+  }
+
+  /* ---------- Question overlay ---------- */
+  .q-overlay{
+    position:absolute; inset:0; background: rgba(9,11,26,.88);
+    display:none; align-items:center; justify-content:center; padding: 14px;
+  }
+  .q-overlay.show{ display:flex; }
+  .q-card{
+    width:100%; max-width: 620px; max-height: 100%; overflow:auto;
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 20px 20px; box-shadow: var(--shadow);
+  }
+  .q-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .q-num{ font-size:.78rem; color:var(--ink-dim); }
+  .q-timer{
+    display:flex; align-items:center; gap:6px;
+    font-size:1.35rem; font-weight:800; color:var(--green);
+    font-variant-numeric: tabular-nums;
+  }
+  .q-timer.low{ color:var(--coral); animation: timerPulse .6s ease-in-out infinite; }
+  @keyframes timerPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.14); } }
+  .timer-wrap{
+    width:100%; height:10px; background:#0F1330; border-radius:999px; overflow:hidden; margin: 4px 0 14px;
+    border:1px solid var(--line);
+  }
+  .timer-bar{ height:100%; background: linear-gradient(90deg, var(--green), var(--amber)); width:100%; transition: width .2s linear, background .3s; }
+  .q-svg-wrap{ display:flex; justify-content:center; margin: 6px 0 12px; }
+  .q-svg-wrap svg{ width:100%; max-width:340px; height:auto; }
+  .q-prompt{ font-size:1.02rem; line-height:1.5; margin-bottom:14px; }
+  .q-answer-row{ display:flex; gap:10px; }
+  .q-answer-row input{
+    flex:1; padding:12px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:#0F1330; color:var(--ink); font-size:1.1rem; font-family:inherit;
+  }
+  .q-answer-row input:focus{ outline:none; border-color:var(--cyan); }
+  .q-unit{ align-self:center; color:var(--ink-dim); font-size:.85rem; }
+  .q-feedback{ margin-top:12px; font-size:.92rem; padding:10px 12px; border-radius:10px; display:none; }
+  .q-feedback.correct{ display:block; background:rgba(107,227,138,.14); color:var(--green); }
+  .q-feedback.wrong{ display:block; background:rgba(255,107,91,.14); color:var(--coral); }
+
+  /* ---------- Results ---------- */
+  .result-panel{ max-width:520px; margin:20px auto 0; text-align:center; }
+  .result-headline{ font-size:1.7rem; margin: 2px 0 8px; animation: scorePop .55s cubic-bezier(.22,1.4,.36,1); }
+  .result-player-name{ font-size:1.15rem; font-weight:700; color:var(--ink); margin: 4px 0 2px; }
+  .result-score{ font-size: 3.2rem; margin: 6px 0; color:var(--amber); animation: scorePop .5s cubic-bezier(.22,1.4,.36,1); }
+  @keyframes scorePop{ 0%{ transform:scale(.6); opacity:0; } 70%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); } }
+  .unlock-msg{ font-size:.92rem; font-weight:700; padding:10px 14px; border-radius:10px; margin:14px 0 0; }
+  .result-grid{ display:flex; justify-content:center; gap:24px; margin: 14px 0 20px; flex-wrap:wrap; }
+  .result-grid div{ font-size:.85rem; color:var(--ink-dim); }
+  .result-grid div b{ display:block; font-size:1.3rem; color:var(--ink); }
+  .name-save{ font-size:.85rem; color:var(--ink-dim); margin-top:6px; }
+
+
+  #btn-mute{
+    position:fixed; top:14px; right:14px; z-index:60;
+    width:42px; height:42px; border-radius:50%;
+    border:1.5px solid var(--line); background:var(--bg-panel); color:var(--ink);
+    font-size:1.15rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    box-shadow: var(--shadow);
+  }
+  #btn-mute:hover{ border-color: var(--cyan); }
+
+  .q-read-row{ display:flex; justify-content:flex-end; margin: -4px 0 8px; }
+  .q-read-btn{
+    background:transparent; border:1.5px solid var(--line); color:var(--ink-dim);
+    border-radius:999px; padding:5px 12px; font-size:.76rem; cursor:pointer; font-family:inherit;
+  }
+  .q-read-btn:hover{ border-color: var(--cyan); color:var(--ink); }
+
+  .rotate-overlay{
+    display:none;
+    position:absolute; inset:0; z-index:45;
+    background: rgba(8,14,32,.94);
+    color:#fff; text-align:center;
+    flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    padding:20px;
+  }
+  .rotate-overlay .icon{ font-size:2.8rem; animation: rotatehint 1.6s ease-in-out infinite; display:inline-block; }
+  @keyframes rotatehint{ 0%,100%{ transform:rotate(0deg);} 50%{ transform:rotate(90deg);} }
+  @media (max-width:820px) and (orientation:portrait){
+    #screen-game.active .rotate-overlay{ display:flex; }
+  }
+</style>
+</head>
+<body>
+<div class="page-figures" aria-hidden="true">
+  <svg class="pf pf1" viewBox="0 0 40 36"><polygon points="20,2 38,34 2,34" fill="#FFD54A"/></svg>
+  <svg class="pf pf2" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#2F6FED"/></svg>
+  <svg class="pf pf3" viewBox="0 0 40 30"><polygon points="10,2 38,2 30,28 2,28" fill="#2F6FED"/></svg>
+  <svg class="pf pf4" viewBox="0 0 40 26"><polygon points="9,2 31,2 38,24 2,24" fill="#FFD54A"/></svg>
+  <svg class="pf pf5" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD54A"/></svg>
+  <svg class="pf pf6" viewBox="0 0 40 36"><polygon points="20,2 38,34 2,34" fill="#2F6FED"/></svg>
+  <svg class="pf pf7" viewBox="0 0 40 30"><polygon points="10,2 38,2 30,28 2,28" fill="#FFD54A"/></svg>
+</div>
+<button id="btn-mute" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+<div id="app">
+
+  <!-- ============ TITLE SCREEN ============ -->
+  <section class="screen active" id="screen-title">
+    <div class="banner">
+      <div class="banner-glow g1"></div>
+      <div class="banner-glow g2"></div>
+      <div class="banner-glow g3"></div>
+      <div class="banner-shapes" aria-hidden="true">
+        <svg class="fshape f1" viewBox="0 0 40 36"><polygon points="20,2 38,34 2,34" fill="#FFD54A" opacity=".9"/></svg>
+        <svg class="fshape f2" viewBox="0 0 40 30"><polygon points="10,2 38,2 30,28 2,28" fill="#FFFFFF" opacity=".75"/></svg>
+        <svg class="fshape f3" viewBox="0 0 40 26"><polygon points="9,2 31,2 38,24 2,24" fill="#FFD54A" opacity=".85"/></svg>
+        <svg class="fshape f4" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFFFFF" opacity=".7"/></svg>
+        <svg class="fshape f5" viewBox="0 0 40 36"><polygon points="20,2 38,34 2,34" fill="#FFFFFF" opacity=".75"/></svg>
+        <svg class="fshape f6" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#FFD54A" opacity=".85"/></svg>
+        <svg class="fshape f7" viewBox="0 0 40 30"><polygon points="10,2 38,2 30,28 2,28" fill="#FFD54A" opacity=".8"/></svg>
+      </div>
+      <div class="hero">
+        <h1 class="display">GEO QUEST</h1>
+        <p class="tagline">Jump the obstacles. Grab the shapes. Solve perimeter &amp; area problems before the clock runs out.</p>
+        <button class="btn" id="btn-goto-start">Play</button>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-head">
+        <h2 class="display"><span class="pulse"></span>Online Leaderboard</h2>
+      </div>
+      <p class="board-sub">Live scores from every player — ranked by score, then by speed.</p>
+      <div class="panel" id="board-panel">
+        <div class="board-empty">Loading scores…</div>
+      </div>
+    </div>
+    <footer class="foot">GEO QUEST · a geometry practice runner for Grade 6 · perimeter &amp; area<br><span class="credits">Developed by Mrs. May Rose M. De Vera &amp; Mrs. Lorry F. Mazo</span></footer>
+  </section>
+
+  <!-- ============ PLAYER INFO SCREEN ============ -->
+  <section class="screen" id="screen-info">
+    <div class="panel form-panel">
+      <div class="field">
+        <label for="inp-name">Name</label>
+        <input id="inp-name" type="text" maxlength="20" placeholder="e.g. Juan Dela Cruz" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="inp-section">Section</label>
+        <input id="inp-section" type="text" maxlength="20" placeholder="e.g. Sampaguita" autocomplete="off">
+      </div>
+      <div class="hint-err" id="info-error"></div>
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <button class="btn secondary" id="btn-info-back">Back</button>
+        <button class="btn" id="btn-info-continue">Start</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LEVEL SELECT ============ -->
+  <section class="screen" id="screen-level">
+    <div class="hero" style="padding-bottom:0;">
+      <h2 class="display" style="font-size:1.8rem;">Choose a level</h2>
+      <p class="tagline" style="margin-bottom:0;">Playing as <b id="lvl-player-tag" style="color:var(--ink);"></b></p>
+    </div>
+    <div class="levels">
+      <div class="level-card easy" data-level="easy">
+        <span class="tag">LEVEL 1</span>
+        <h3 class="display">Easy</h3>
+        <ul>
+          <li>10 questions</li>
+          <li>45 seconds per question</li>
+          <li>Triangles, parallelograms &amp; trapezoids</li>
+          <li>Slower obstacle speed</li>
+        </ul>
+      </div>
+      <div class="level-card hard" data-level="hard">
+        <span class="tag">LEVEL 2</span>
+        <h3 class="display">Difficult</h3>
+        <ul>
+          <li>10 questions</li>
+          <li>60 seconds per question</li>
+          <li>Larger numbers + composite figures</li>
+          <li>Faster obstacle speed</li>
+        </ul>
+        <p class="lock-note" id="hard-lock-note"></p>
+      </div>
+    </div>
+    <div class="center-actions">
+      <button class="btn secondary" id="btn-level-back">Back</button>
+    </div>
+  </section>
+
+  <!-- ============ HOW TO PLAY / GAME DIRECTIONS ============ -->
+  <section class="screen" id="screen-howto">
+    <div class="hero" style="padding-bottom:0;">
+      <h2 class="display" style="font-size:1.8rem;">How to play</h2>
+      <p class="tagline" style="margin-bottom:0;">Level: <b id="howto-level-name" style="color:var(--ink);"></b></p>
+    </div>
+    <div class="panel form-panel" style="max-width:560px;">
+      <ul style="margin:0; padding-left:20px; line-height:1.9; font-size:.95rem;">
+        <li><b>Jump</b> by tapping the screen, clicking, or pressing SPACE — time it to clear the obstacles ahead.</li>
+        <li>Touching an obstacle costs you a <b>life</b>. You start with <b>3 lives</b>; lose them all and the run ends early.</li>
+        <li>Running into a <b>coin</b> pauses the action and pops up a geometry problem — find the perimeter or area shown in the diagram.</li>
+        <li>You'll answer <b id="howto-qcount">10</b> questions in total, with <b id="howto-qtime">45</b> seconds on the clock for each one.</li>
+        <li>Correct answers add points to your score; your best runs appear on the live leaderboard.</li>
+        <li>Use the 🔊 button (top corner) to mute sound, and "Read Aloud" on any question to hear it spoken.</li>
+      </ul>
+      <div style="display:flex; gap:10px; margin-top:18px;">
+        <button class="btn secondary" id="btn-howto-back">Back</button>
+        <button class="btn" id="btn-howto-start">Start game</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section class="screen" id="screen-game">
+    <div class="game-wrap">
+      <div class="hud">
+        <div class="who">Runner: <b id="hud-name"></b> <span id="hud-section-wrap">· <b id="hud-section"></b></span></div>
+        <div class="hud-stats">
+          <div class="hud-chip">Score <b id="hud-score">0</b></div>
+          <div class="hud-chip">Question <b id="hud-qnum">0</b>/10</div>
+          <div class="hud-chip">Lives <span class="lives" id="hud-lives"></span></div>
+        </div>
+      </div>
+      <div id="canvasHolder">
+        <canvas id="gameCanvas" width="900" height="260"></canvas>
+        <div class="canvas-hint" id="canvas-hint">Tap, click, or press SPACE to jump</div>
+        <div class="rotate-overlay" id="rotate-overlay">
+          <span class="icon">📱</span>
+          <div style="font-weight:700; font-size:1.05rem;">Turn your phone sideways</div>
+          <div style="font-size:.82rem; opacity:.8; max-width:250px;">Rotate to landscape for the best GEO QUEST experience.</div>
+        </div>
+        <div class="q-overlay" id="q-overlay">
+          <div class="q-card">
+            <div class="q-top">
+              <span class="q-num" id="q-num-label">Question 1 of 10</span>
+              <span class="q-timer" id="q-timer-label">⏱ 60s</span>
+            </div>
+            <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+            <div class="q-svg-wrap" id="q-svg-wrap"></div>
+            <div class="q-read-row"><button type="button" class="q-read-btn" id="q-read-btn">🔊 Read Aloud</button></div>
+            <div class="q-prompt" id="q-prompt"></div>
+            <div class="q-answer-row">
+              <input type="number" step="any" id="q-input" placeholder="Your answer" inputmode="decimal">
+              <span class="q-unit" id="q-unit">cm</span>
+              <button class="btn" id="q-submit">Submit</button>
+            </div>
+            <div class="q-feedback" id="q-feedback"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS SCREEN ============ -->
+  <section class="screen" id="screen-result">
+    <div class="panel result-panel">
+      <p id="result-level-complete" style="color:var(--ink-dim); margin-bottom:2px;">Level Complete!</p>
+      <p id="result-player-name" class="result-player-name"></p>
+      <h2 id="result-headline" class="display result-headline">🎉 Congratulations!</h2>
+      <div class="result-score display" id="result-score">0</div>
+      <div class="result-grid">
+        <div><b id="result-correct">0/10</b>Correct answers</div>
+        <div><b id="result-level">—</b>Level</div>
+        <div><b id="result-accuracy">0%</b>Accuracy</div>
+        <div><b id="result-time">0:00</b>Time</div>
+      </div>
+      <p class="unlock-msg" id="unlock-msg" style="display:none;"></p>
+      <p class="name-save" id="result-save-note">Saving your score to the leaderboard…</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:18px; flex-wrap:wrap;">
+        <button class="btn secondary" id="btn-result-menu">Back to title</button>
+        <button class="btn secondary" id="btn-result-retry">Play again</button>
+        <button class="btn" id="btn-result-next" style="display:none;">Play Level 2</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="confetti-container" id="confetti-container"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     STORAGE / LEADERBOARD  (backed by a Google Sheet via Apps Script)
+  ============================================================ */
+  // Paste the "Web app URL" you get after deploying Code.gs (see setup
+  // instructions). It looks like:
+  // https://script.google.com/macros/s/AKfycb..................../exec
+  const LEADERBOARD_API_URL = "https://script.google.com/macros/s/AKfycbyRctzoxM-dfF4P9yMx7RxnRMeavolR-YLX47UOxwXe3NslE6oSX_i0ue1zGlpQ08c2/exec";
+
+  async function loadLeaderboard(){
+    try{
+      if(!LEADERBOARD_API_URL || LEADERBOARD_API_URL.indexOf("PASTE_YOUR") === 0) return [];
+      const res = await fetch(LEADERBOARD_API_URL, { method: "GET" });
+      const arr = await res.json();
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){
+      return [];
+    }
+  }
+
+  function formatTime(ms){
+    if(ms == null || isNaN(ms)) return "—";
+    const totalSec = Math.round(ms/1000);
+    const m = Math.floor(totalSec/60);
+    const s = totalSec % 60;
+    return m + ":" + String(s).padStart(2,"0");
+  }
+
+  async function saveScoreToLeaderboard(entry){
+    try{
+      if(!LEADERBOARD_API_URL || LEADERBOARD_API_URL.indexOf("PASTE_YOUR") === 0) return null;
+      const res = await fetch(LEADERBOARD_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids CORS preflight
+        body: JSON.stringify(entry)
+      });
+      const trimmed = await res.json();
+      return Array.isArray(trimmed) ? trimmed : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function renderLeaderboard(list){
+    const panel = document.getElementById("board-panel");
+    if(!list || list.length===0){
+      panel.innerHTML = '<div class="board-empty">No scores yet — be the first to finish a run!</div>';
+      return;
+    }
+    let rows = list.map((e,i)=>{
+      const lvl = e.level === "hard" ? "Difficult" : "Easy";
+      const name = escapeHtml(e.name || "Player");
+      const section = escapeHtml(e.section || "");
+      return `<tr>
+        <td class="rank">${i+1}</td>
+        <td>${name}<div class="lvl">${section}</div></td>
+        <td class="lvl">${lvl}</td>
+        <td class="lvl">${formatTime(e.timeMs)}</td>
+        <td class="score">${e.score}</td>
+      </tr>`;
+    }).join("");
+    panel.innerHTML = `<table class="board">
+      <thead><tr><th>#</th><th>Player</th><th>Level</th><th>Time</th><th>Score</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  async function refreshLeaderboardUI(){
+    const list = await loadLeaderboard();
+    renderLeaderboard(list);
+  }
+
+  let lbPoll = null;
+  function startLeaderboardPolling(){
+    refreshLeaderboardUI();
+    if(lbPoll) clearInterval(lbPoll);
+    lbPoll = setInterval(refreshLeaderboardUI, 4000);
+  }
+  function stopLeaderboardPolling(){
+    if(lbPoll){ clearInterval(lbPoll); lbPoll = null; }
+  }
+
+  /* ============================================================
+     CELEBRATION EFFECTS
+  ============================================================ */
+  function fireConfetti(count){
+    const container = document.getElementById("confetti-container");
+    if(!container) return;
+    const colors = ["#FF6B5B","#FFC857","#6BE38A","#3FE0D0","#5B8DFF","#FF5D8F","#B388FF"];
+    for(let i=0;i<count;i++){
+      const el = document.createElement("div");
+      el.className = "confetti-piece";
+      el.style.left = (Math.random()*100) + "%";
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.animationDelay = (Math.random()*0.35) + "s";
+      el.style.animationDuration = (1.5 + Math.random()*1.3) + "s";
+      el.style.width = (6 + Math.random()*6) + "px";
+      el.style.height = (10 + Math.random()*10) + "px";
+      container.appendChild(el);
+      setTimeout(()=> el.remove(), 3200);
+    }
+  }
+  function shakeEl(el){
+    if(!el) return;
+    el.classList.remove("shake");
+    void el.offsetWidth;
+    el.classList.add("shake");
+  }
+  function animateCountUp(el, to, duration){
+    const start = performance.now();
+    function step(t){
+      const p = Math.min(1, (t-start)/duration);
+      const eased = 1 - Math.pow(1-p, 3);
+      el.textContent = Math.round(to*eased);
+      if(p < 1) requestAnimationFrame(step);
+      else el.textContent = to;
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ============================================================
+     SCREEN NAVIGATION
+  ============================================================ */
+  const screens = {};
+  document.querySelectorAll(".screen").forEach(s => screens[s.id] = s);
+  function showScreen(id){
+    Object.values(screens).forEach(s => s.classList.remove("active"));
+    screens[id].classList.add("active");
+    document.body.classList.toggle("in-game", id === "screen-game");
+    if(id === "screen-title") startLeaderboardPolling();
+    else stopLeaderboardPolling();
+    if(id === "screen-level") updateLevelCardsUI();
+  }
+
+  const player = { name:"", section:"" };
+  let unlockedHard = false;
+
+  function updateLevelCardsUI(){
+    const hardCard = document.querySelector(".level-card.hard");
+    const note = document.getElementById("hard-lock-note");
+    if(!hardCard || !note) return;
+    if(unlockedHard){
+      hardCard.classList.remove("locked");
+      note.textContent = "Unlocked — nice work!";
+    } else {
+      hardCard.classList.add("locked");
+      note.textContent = "Score 8/10 or higher on Easy to unlock.";
+    }
+  }
+
+  document.getElementById("btn-goto-start").addEventListener("click", ()=>{
+    ensureAudio();
+    showScreen("screen-info");
+  });
+  document.getElementById("btn-info-back").addEventListener("click", ()=>{
+    showScreen("screen-title");
+  });
+  document.getElementById("btn-info-continue").addEventListener("click", ()=>{
+    const name = document.getElementById("inp-name").value.trim();
+    const section = document.getElementById("inp-section").value.trim();
+    const err = document.getElementById("info-error");
+    if(!name || !section){
+      err.textContent = "Please enter both your name and section.";
+      return;
+    }
+    err.textContent = "";
+    player.name = name.slice(0,20);
+    player.section = section.slice(0,20);
+    document.getElementById("lvl-player-tag").textContent = `${player.name} (${player.section})`;
+    showScreen("screen-level");
+  });
+  document.getElementById("btn-level-back").addEventListener("click", ()=>{
+    showScreen("screen-info");
+  });
+  let pendingLevel = "easy";
+  document.querySelectorAll(".level-card").forEach(card=>{
+    card.addEventListener("click", ()=>{
+      const lvl = card.getAttribute("data-level");
+      if(lvl === "hard" && !unlockedHard){
+        shakeEl(card);
+        return;
+      }
+      pendingLevel = lvl;
+      const cfg = LEVELS[pendingLevel];
+      document.getElementById("howto-level-name").textContent = cfg.label;
+      document.getElementById("howto-qtime").textContent = cfg.questionTime;
+      showScreen("screen-howto");
+    });
+  });
+  document.getElementById("btn-howto-back").addEventListener("click", ()=>{
+    showScreen("screen-level");
+  });
+  document.getElementById("btn-howto-start").addEventListener("click", ()=>{
+    startGame(pendingLevel);
+  });
+  document.getElementById("btn-result-menu").addEventListener("click", ()=>{
+    showScreen("screen-title");
+  });
+  document.getElementById("btn-result-retry").addEventListener("click", ()=>{
+    startGame(levelKey);
+  });
+  document.getElementById("btn-result-next").addEventListener("click", ()=>{
+    pendingLevel = "hard";
+    const cfg = LEVELS.hard;
+    document.getElementById("howto-level-name").textContent = cfg.label;
+    document.getElementById("howto-qtime").textContent = cfg.questionTime;
+    showScreen("screen-howto");
+  });
+
+  /* ============================================================
+     MATH QUESTION GENERATOR
+     Competency: perimeter & area of triangles, parallelograms,
+     trapezoids, and composite figures.
+  ============================================================ */
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function pick(arr){ return arr[randInt(0,arr.length-1)]; }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = randInt(0,i);
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  const SVG_NS_OPEN = (vb)=> `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">`;
+  const STROKE = { tri:"#3FE0D0", para:"#FF5D8F", trap:"#FFC857" };
+  const TEXT_STYLE = 'fill="#F2F3FA" font-family="Segoe UI, Arial, sans-serif" font-size="15" text-anchor="middle"';
+  const DIM_STYLE  = 'fill="#9AA1C4" font-family="Segoe UI, Arial, sans-serif" font-size="13" text-anchor="middle"';
+
+  // ---- single shape SVGs (perimeter mode: all sides labeled) ----
+  function svgTrianglePerimeter(a,b,c){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="45,165 255,165 150,25" fill="none" stroke="${STROKE.tri}" stroke-width="3" stroke-linejoin="round"/>
+      <text x="150" y="184" ${DIM_STYLE}>${a} cm</text>
+      <text x="225" y="98" ${DIM_STYLE}>${b} cm</text>
+      <text x="80" y="98" ${DIM_STYLE}>${c} cm</text>
+    </svg>`;
+  }
+  function svgTriangleArea(base,height){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="45,165 255,165 150,25" fill="none" stroke="${STROKE.tri}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="150" y1="25" x2="150" y2="165" stroke="${STROKE.trap}" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="150" y="184" ${DIM_STYLE}>base = ${base} cm</text>
+      <text x="176" y="98" ${DIM_STYLE}>h = ${height} cm</text>
+    </svg>`;
+  }
+  function svgParallelogramPerimeter(base, side){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="60,165 230,165 260,35 90,35" fill="none" stroke="${STROKE.para}" stroke-width="3" stroke-linejoin="round"/>
+      <text x="145" y="184" ${DIM_STYLE}>${base} cm</text>
+      <text x="90" y="100" ${DIM_STYLE} transform="rotate(-70 90 100)">${side} cm</text>
+    </svg>`;
+  }
+  function svgParallelogramArea(base, height){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="60,165 230,165 260,35 90,35" fill="none" stroke="${STROKE.para}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="90" y1="35" x2="90" y2="165" stroke="${STROKE.trap}" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="145" y="184" ${DIM_STYLE}>base = ${base} cm</text>
+      <text x="62" y="100" ${DIM_STYLE}>h = ${height} cm</text>
+    </svg>`;
+  }
+  function svgTrapezoidPerimeter(top, bottom, legL, legR){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="40,165 260,165 205,35 100,35" fill="none" stroke="${STROKE.trap}" stroke-width="3" stroke-linejoin="round"/>
+      <text x="150" y="30" ${DIM_STYLE}>${top} cm</text>
+      <text x="150" y="184" ${DIM_STYLE}>${bottom} cm</text>
+      <text x="55" y="100" ${DIM_STYLE} transform="rotate(-58 55 100)">${legL} cm</text>
+      <text x="248" y="100" ${DIM_STYLE} transform="rotate(58 248 100)">${legR} cm</text>
+    </svg>`;
+  }
+  function svgTrapezoidArea(top, bottom, height){
+    return SVG_NS_OPEN("0 0 300 190") + `
+      <polygon points="40,165 260,165 205,35 100,35" fill="none" stroke="${STROKE.trap}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="100" y1="35" x2="100" y2="165" stroke="${STROKE.tri}" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="150" y="30" ${DIM_STYLE}>${top} cm</text>
+      <text x="150" y="184" ${DIM_STYLE}>${bottom} cm</text>
+      <text x="70" y="100" ${DIM_STYLE}>h = ${height} cm</text>
+    </svg>`;
+  }
+
+  // ---- composite figures: ONE connected outline made of two joined parts,
+  // with a dashed line marking where they meet (never drawn as two separate
+  // shapes with a "+" between them) ----
+
+  function svgCompositeHouse(w, h1, h2){
+    // Rectangle (base w, height h1) with a triangular roof (base w, height h2)
+    return SVG_NS_OPEN("0 0 320 200") + `
+      <polygon points="50,178 230,178 230,98 140,30 50,98" fill="none" stroke="${STROKE.tri}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="50" y1="98" x2="230" y2="98" stroke="${STROKE.trap}" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="140" y1="30" x2="140" y2="98" stroke="${STROKE.para}" stroke-width="1.8" stroke-dasharray="4,3"/>
+      <text x="140" y="196" ${DIM_STYLE}>${w} cm</text>
+      <text x="256" y="140" ${DIM_STYLE}>h₁=${h1} cm</text>
+      <text x="176" y="65" ${DIM_STYLE}>h₂=${h2} cm</text>
+    </svg>`;
+  }
+
+  function svgCompositeTrapTriangle(wb, wt, h1, h2){
+    // Trapezoid (parallel sides wb, wt; height h1) with a triangle (base wt, height h2) on its shorter side
+    return SVG_NS_OPEN("0 0 320 200") + `
+      <polygon points="40,178 280,178 210,98 160,28 110,98" fill="none" stroke="${STROKE.trap}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="110" y1="98" x2="210" y2="98" stroke="${STROKE.para}" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="110" y1="98" x2="110" y2="178" stroke="${STROKE.tri}" stroke-width="1.8" stroke-dasharray="4,3"/>
+      <line x1="160" y1="28" x2="160" y2="98" stroke="${STROKE.tri}" stroke-width="1.8" stroke-dasharray="4,3"/>
+      <text x="160" y="196" ${DIM_STYLE}>${wb} cm</text>
+      <text x="160" y="90" ${DIM_STYLE}>${wt} cm</text>
+      <text x="78" y="140" ${DIM_STYLE}>h₁=${h1} cm</text>
+      <text x="196" y="62" ${DIM_STYLE}>h₂=${h2} cm</text>
+    </svg>`;
+  }
+
+  function svgCompositeParaTriangle(wp, h1, tb, h2){
+    // Parallelogram (base wp, height h1) with a triangle (base = shared slanted side tb, height h2) attached to its right side, forming one arrow-like shape
+    return SVG_NS_OPEN("0 0 340 200") + `
+      <polygon points="40,170 180,170 280,128 220,88 80,88" fill="none" stroke="${STROKE.para}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="180" y1="170" x2="220" y2="88" stroke="${STROKE.trap}" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="110" y1="170" x2="110" y2="88" stroke="${STROKE.tri}" stroke-width="1.8" stroke-dasharray="4,3"/>
+      <text x="110" y="188" ${DIM_STYLE}>${wp} cm</text>
+      <text x="82" y="132" ${DIM_STYLE}>h₁=${h1} cm</text>
+      <text x="222" y="140" ${DIM_STYLE}>${tb} cm</text>
+      <text x="258" y="100" ${DIM_STYLE}>h₂=${h2} cm</text>
+    </svg>`;
+  }
+
+  function genCompositeHouse(diff){
+    const range = diff === "easy" ? [6,16] : [8,26];
+    const w = randInt(range[0], range[1]);
+    const h1 = randInt(range[0], range[1]);
+    const h2 = randInt(range[0], range[1]);
+    return {
+      svg: svgCompositeHouse(w,h1,h2),
+      prompt: `The composite figure below is made of a rectangle with a triangular roof on top, joined into a single shape (like a house). The rectangle has a base of ${w} cm and a height of ${h1} cm. The triangular roof shares the same base and has a height of ${h2} cm. Find the TOTAL area of the composite figure.`,
+      answer: w*h1 + 0.5*w*h2,
+      unit: "cm²"
+    };
+  }
+
+  function genCompositeTrapTriangle(diff){
+    const range = diff === "easy" ? [6,16] : [8,26];
+    let wb = randInt(range[0], range[1]);
+    let wt = randInt(range[0], range[1]);
+    if(wb <= wt){ const tmp = wb; wb = wt + 4; wt = tmp; }
+    const h1 = randInt(range[0], range[1]);
+    const h2 = randInt(range[0], range[1]);
+    return {
+      svg: svgCompositeTrapTriangle(wb,wt,h1,h2),
+      prompt: `The figure below is a trapezoid with a triangle joined onto its shorter (top) side, forming one combined shape. The trapezoid has parallel sides of ${wb} cm and ${wt} cm and a height of ${h1} cm. The triangle on top shares the ${wt} cm side as its base and has a height of ${h2} cm. Find the TOTAL area of the composite figure.`,
+      answer: ((wb+wt)/2)*h1 + 0.5*wt*h2,
+      unit: "cm²"
+    };
+  }
+
+  function genCompositeParaTriangle(diff){
+    const range = diff === "easy" ? [6,16] : [8,26];
+    const wp = randInt(range[0], range[1]);
+    const h1 = randInt(range[0], range[1]);
+    const tb = randInt(range[0], range[1]);
+    const h2 = randInt(range[0], range[1]);
+    return {
+      svg: svgCompositeParaTriangle(wp,h1,tb,h2),
+      prompt: `The figure below joins a parallelogram and a triangle along one shared side into a single arrow-like shape. The parallelogram has a base of ${wp} cm and a height of ${h1} cm. The triangle attached to its side has a base of ${tb} cm and a height of ${h2} cm. Find the TOTAL area of the composite figure.`,
+      answer: wp*h1 + 0.5*tb*h2,
+      unit: "cm²"
+    };
+  }
+
+  function genComposite(diff){
+    const fn = pick([genCompositeHouse, genCompositeTrapTriangle, genCompositeParaTriangle]);
+    return fn(diff);
+  }
+
+  function genTrianglePerimeter(diff){
+    const range = diff === "easy" ? [3,15] : [8,30];
+    let a,b,c;
+    do{
+      a = randInt(range[0],range[1]);
+      b = randInt(range[0],range[1]);
+      c = randInt(range[0],range[1]);
+    } while(a+b<=c || a+c<=b || b+c<=a);
+    return {
+      svg: svgTrianglePerimeter(a,b,c),
+      prompt: `A triangle has side lengths ${a} cm, ${b} cm, and ${c} cm. Find the perimeter of the triangle.`,
+      answer: a+b+c,
+      unit: "cm"
+    };
+  }
+  function genTriangleArea(diff){
+    const range = diff === "easy" ? [4,16] : [8,28];
+    const base = randInt(range[0],range[1]);
+    const height = randInt(range[0],range[1]);
+    return {
+      svg: svgTriangleArea(base,height),
+      prompt: `A triangle has a base of ${base} cm and a height of ${height} cm. Find the area of the triangle.`,
+      answer: (base*height)/2,
+      unit: "cm²"
+    };
+  }
+  function genParallelogramPerimeter(diff){
+    const range = diff === "easy" ? [4,16] : [8,28];
+    const base = randInt(range[0],range[1]);
+    const side = randInt(range[0],range[1]);
+    return {
+      svg: svgParallelogramPerimeter(base,side),
+      prompt: `A parallelogram has a base of ${base} cm and a side length of ${side} cm. Find the perimeter of the parallelogram.`,
+      answer: 2*(base+side),
+      unit: "cm"
+    };
+  }
+  function genParallelogramArea(diff){
+    const range = diff === "easy" ? [4,16] : [8,28];
+    const base = randInt(range[0],range[1]);
+    const height = randInt(range[0],range[1]);
+    return {
+      svg: svgParallelogramArea(base,height),
+      prompt: `A parallelogram has a base of ${base} cm and a height of ${height} cm. Find the area of the parallelogram.`,
+      answer: base*height,
+      unit: "cm²"
+    };
+  }
+  function genTrapezoidPerimeter(diff){
+    const range = diff === "easy" ? [3,14] : [6,24];
+    const top = randInt(range[0],range[1]);
+    const bottom = randInt(range[0],range[1]);
+    const legL = randInt(range[0],range[1]);
+    const legR = randInt(range[0],range[1]);
+    return {
+      svg: svgTrapezoidPerimeter(top,bottom,legL,legR),
+      prompt: `A trapezoid has parallel sides of ${top} cm and ${bottom} cm, and legs of ${legL} cm and ${legR} cm. Find the perimeter of the trapezoid.`,
+      answer: top+bottom+legL+legR,
+      unit: "cm"
+    };
+  }
+  function genTrapezoidArea(diff){
+    const range = diff === "easy" ? [4,16] : [8,28];
+    let top = randInt(range[0],range[1]);
+    let bottom = randInt(range[0],range[1]);
+    if((top+bottom) % 2 !== 0) bottom += 1;
+    const height = randInt(range[0],range[1]);
+    return {
+      svg: svgTrapezoidArea(top,bottom,height),
+      prompt: `A trapezoid has parallel sides of ${top} cm and ${bottom} cm, and a height of ${height} cm. Find the area of the trapezoid.`,
+      answer: ((top+bottom)/2)*height,
+      unit: "cm²"
+    };
+  }
+
+  const EASY_TYPES = [genTrianglePerimeter, genTriangleArea, genParallelogramPerimeter, genParallelogramArea, genTrapezoidPerimeter, genTrapezoidArea];
+  const HARD_TYPES = [genTrianglePerimeter, genTriangleArea, genParallelogramPerimeter, genParallelogramArea, genTrapezoidPerimeter, genTrapezoidArea, genComposite, genComposite];
+
+  function buildQuestionSet(diff){
+    const pool = diff === "easy" ? EASY_TYPES : HARD_TYPES;
+    let sequence = [];
+    while(sequence.length < 10){
+      sequence = sequence.concat(shuffle(pool));
+    }
+    sequence = sequence.slice(0,10);
+    return sequence.map(fn => fn(diff));
+  }
+
+  /* ============================================================
+     AUDIO ENGINE (synthesized with Web Audio API — no external files)
+  ============================================================ */
+  let audioCtx = null;
+  let musicTimer = null;
+  let musicOn = true;
+  let sfxOn = true;
+  let musicStep = 0;
+  const MUSIC_SCALE = [261.6,293.7,329.6,392.0,440.0,392.0,329.6,293.7];
+
+  function ensureAudio(){
+    try{
+      if(!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } else if(audioCtx.state === "suspended"){
+        audioCtx.resume();
+      }
+    }catch(e){ audioCtx = null; }
+  }
+
+  function beep(freq, dur, type, vol, delay){
+    if(!sfxOn || !audioCtx) return;
+    try{
+      const t0 = audioCtx.currentTime + (delay||0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol==null?0.18:vol, t0+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t0); osc.stop(t0+dur+0.03);
+    }catch(e){}
+  }
+
+  function sfxJump(){ beep(520,0.12,"square",0.14); beep(760,0.10,"square",0.10,0.05); }
+  function sfxCoin(){ beep(880,0.08,"triangle",0.16); beep(1320,0.12,"triangle",0.14,0.06); }
+  function sfxHit(){ beep(140,0.25,"sawtooth",0.2); }
+  function sfxCorrect(){ [523,659,784,1047].forEach((f,i)=> beep(f,0.16,"triangle",0.16,i*0.09)); }
+  function sfxWrong(){ beep(300,0.2,"sawtooth",0.16); beep(200,0.28,"sawtooth",0.14,0.12); }
+  function sfxGameOver(){ [523,494,440,392].forEach((f,i)=> beep(f,0.28,"sine",0.15,i*0.18)); }
+
+  function startMusic(){
+    if(!audioCtx) return;
+    stopMusic();
+    musicStep = 0;
+    musicTimer = setInterval(()=>{
+      if(!musicOn) return;
+      const f = MUSIC_SCALE[musicStep % MUSIC_SCALE.length];
+      beep(f, 0.35, "sine", 0.045);
+      beep(f/2, 0.5, "sine", 0.03);
+      musicStep++;
+    }, 420);
+  }
+  function stopMusic(){
+    if(musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+  }
+  function toggleSound(){
+    sfxOn = !sfxOn;
+    musicOn = sfxOn;
+    document.getElementById("btn-mute").textContent = sfxOn ? "🔊" : "🔈";
+    if(!sfxOn){ stopMusic(); } else if(running){ startMusic(); }
+  }
+  document.getElementById("btn-mute").addEventListener("click", toggleSound);
+
+  /* ============================================================
+     AI READ-ALOUD (browser text-to-speech)
+  ============================================================ */
+  const autoRead = false; // auto-read toggle removed — use the "Read Aloud" button on each question instead
+  function speak(text){
+    if(!("speechSynthesis" in window)) return;
+    try{
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.95;
+      utter.pitch = 1.05;
+      window.speechSynthesis.speak(utter);
+    }catch(e){}
+  }
+  document.getElementById("q-read-btn").addEventListener("click", ()=>{
+    const q = questions[questionIndex];
+    if(q) speak(q.prompt);
+  });
+
+  /* ============================================================
+     MOBILE ORIENTATION (best-effort auto-rotate to landscape)
+  ============================================================ */
+  function tryLockLandscape(){
+    try{
+      const el = document.documentElement;
+      const reqFS = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(window.matchMedia && window.matchMedia("(max-width:820px)").matches && screen.orientation && screen.orientation.lock){
+        if(reqFS && !document.fullscreenElement){
+          reqFS.call(el).then(()=>{
+            screen.orientation.lock("landscape").catch(()=>{});
+          }).catch(()=>{});
+        } else {
+          screen.orientation.lock("landscape").catch(()=>{});
+        }
+      }
+    }catch(e){ /* not supported — CSS rotate hint covers this case */ }
+  }
+  function releaseOrientation(){
+    try{
+      if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+      if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    }catch(e){}
+  }
+
+  /* ============================================================
+     GAME ENGINE
+  ============================================================ */
+  const LEVELS = {
+    easy: { label:"Easy", questionTime:45, pointsCorrect:10, speed:3.6, speedMax:5.2, spawnMin:210, spawnMax:320, coinChance:0.34 },
+    hard: { label:"Difficult", questionTime:60, pointsCorrect:15, speed:4.6, speedMax:6.6, spawnMin:180, spawnMax:270, coinChance:0.30 }
+  };
+
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const CW = canvas.width, CH = canvas.height; // fixed logical game space — never changes
+  const GROUND_Y = CH - 46;
+  let dpr = window.devicePixelRatio || 1;
+
+  // Auto-resize: the game screen is a fixed, fullscreen flex layout (HUD on
+  // top, canvas holder filling the rest), so the holder's own clientWidth /
+  // clientHeight already reflect exactly how much room is available with no
+  // page scrolling involved. We fit the fixed CWxCH logical game space into
+  // that box like `object-fit: contain`, preserving its aspect ratio, then
+  // scale a canvas transform so all game logic keeps using CWxCH untouched.
+  function fitCanvasToContainer(){
+    const holder = document.getElementById("canvasHolder");
+    if(!holder) return;
+    const availW = holder.clientWidth;
+    const availH = holder.clientHeight;
+    if(!availW || !availH) return;
+
+    let cssW, cssH;
+    if(availW / availH > CW / CH){
+      cssH = availH;
+      cssW = Math.round(cssH * (CW/CH));
+    } else {
+      cssW = availW;
+      cssH = Math.round(cssW * (CH/CW));
+    }
+
+    dpr = window.devicePixelRatio || 1;
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW*dpr);
+    canvas.height = Math.round(cssH*dpr);
+    ctx.setTransform(dpr*cssW/CW, 0, 0, dpr*cssH/CH, 0, 0);
+  }
+  let resizeDebounce = null;
+  window.addEventListener("resize", ()=>{
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(()=>{
+      if(screens["screen-game"].classList.contains("active")) fitCanvasToContainer();
+    }, 120);
+  });
+  window.addEventListener("orientationchange", ()=>{
+    setTimeout(()=>{
+      if(screens["screen-game"].classList.contains("active")) fitCanvasToContainer();
+    }, 250);
+  });
+
+  let levelKey = "easy";
+  let levelCfg = null;
+  let questions = [];
+  let questionIndex = 0;
+  let correctCount = 0;
+  let score = 0;
+  let lives = 3;
+  let running = false;
+  let paused = false;
+  let rafId = null;
+  let lastTime = 0;
+  let runStartTime = 0;
+
+  let travel = 0;
+  let spawnAt = 0;
+  let coinsSpawned = 0;
+  let speed = 3.6;
+
+  const gravity = 0.62;
+  const jumpVel = -11.6;
+  const groundH = 40;
+  const P = { x:78, y:GROUND_Y-groundH, w:40, h:40, vy:0, onGround:true, invUntil:0, rot:0, squashX:1, squashY:1, wasOnGround:true };
+  let trail = [];
+  let dashParticles = [];
+
+  let obstacles = [];
+  let coins = [];
+  let bgShapes = [];
+  let clouds = [];
+
+  function resetGameState(){
+    obstacles = [];
+    coins = [];
+    travel = 0;
+    coinsSpawned = 0;
+    questionIndex = 0;
+    correctCount = 0;
+    score = 0;
+    lives = 3;
+    paused = false;
+    P.y = GROUND_Y - groundH;
+    P.vy = 0;
+    P.onGround = true;
+    P.wasOnGround = true;
+    P.squashX = 1;
+    P.squashY = 1;
+    P.invUntil = 0;
+    trail = [];
+    dashParticles = [];
+    speed = levelCfg.speed;
+    spawnAt = randInt(levelCfg.spawnMin, levelCfg.spawnMax);
+    bgShapes = [];
+    const rainbow = ["#FF6B5B","#FFC857","#6BE38A","#3FE0D0","#5B8DFF","#FF5D8F","#B388FF"];
+    for(let i=0;i<7;i++){
+      bgShapes.push({
+        x: Math.random()*CW, y: 18+Math.random()*(GROUND_Y-110),
+        s: 14+Math.random()*20, kind: pick(["tri","para","trap"]),
+        color: pick(rainbow), sp: 0.25+Math.random()*0.45
+      });
+    }
+    clouds = [];
+    for(let i=0;i<4;i++){
+      clouds.push({ x: Math.random()*CW, y: 16+Math.random()*54, s: 18+Math.random()*14, sp: 0.12+Math.random()*0.15 });
+    }
+  }
+
+  function updateHud(){
+    document.getElementById("hud-score").textContent = score;
+    document.getElementById("hud-qnum").textContent = Math.min(questionIndex,10);
+    const livesWrap = document.getElementById("hud-lives");
+    livesWrap.innerHTML = "";
+    for(let i=0;i<3;i++){
+      const dot = document.createElement("span");
+      dot.className = "life-dot" + (i < lives ? "" : " lost");
+      livesWrap.appendChild(dot);
+    }
+  }
+
+  function startGame(level){
+    levelKey = level;
+    levelCfg = LEVELS[level];
+    questions = buildQuestionSet(level === "hard" ? "hard" : "easy");
+    resetGameState();
+    document.getElementById("hud-name").textContent = player.name;
+    const secWrap = document.getElementById("hud-section-wrap");
+    document.getElementById("hud-section").textContent = player.section;
+    secWrap.style.display = player.section ? "inline" : "none";
+    updateHud();
+    showScreen("screen-game");
+    fitCanvasToContainer();
+    ensureAudio();
+    tryLockLandscape();
+    startMusic();
+    running = true;
+    runStartTime = performance.now();
+    lastTime = performance.now();
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
+    document.getElementById("canvas-hint").style.opacity = "1";
+  }
+
+  // Small radiating burst of dust particles — used on jump takeoff and landing
+  function spawnDustBurst(count){
+    for(let i=0;i<count;i++){
+      const angle = Math.PI + (Math.random()-0.5)*1.6; // spray mostly backward/downward
+      const spd = 1.5 + Math.random()*2.5;
+      dashParticles.push({
+        x: P.x + P.w*0.3, y: P.y + P.h,
+        vx: Math.cos(angle)*spd, vy: -Math.abs(Math.sin(angle)*spd)*0.6,
+        len: 3+Math.random()*3, alpha: 0.85, dust:true, grav:true
+      });
+    }
+  }
+
+  function jump(){
+    if(!running || paused) return;
+    if(P.onGround){
+      P.vy = jumpVel;
+      P.onGround = false;
+      P.squashX = 0.78;
+      P.squashY = 1.32;
+      spawnDustBurst(9);
+      sfxJump();
+      document.getElementById("canvas-hint").style.opacity = "0";
+    }
+  }
+  window.addEventListener("keydown", (e)=>{
+    if(e.code === "Space" || e.code === "ArrowUp"){
+      if(screens["screen-game"].classList.contains("active") && !document.getElementById("q-overlay").classList.contains("show")){
+        e.preventDefault();
+        jump();
+      }
+    }
+  });
+  canvas.addEventListener("pointerdown", ()=>{ jump(); });
+
+  const MAX_COINS_PER_RUN = 30; // generous supply — missing a few coins should never stop a player from reaching all 10 questions
+
+  function spawnEntity(){
+    const wantCoin = coinsSpawned < MAX_COINS_PER_RUN && Math.random() < levelCfg.coinChance;
+    if(wantCoin){
+      coinsSpawned++;
+      const high = Math.random() < 0.55;
+      coins.push({
+        x: CW + 20, y: high ? GROUND_Y-92 : GROUND_Y-42, r: 14, bob: Math.random()*Math.PI*2, collected:false
+      });
+    } else {
+      const h = randInt(30,52);
+      obstacles.push({ x: CW+20, w: randInt(20,30), h, hit:false });
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    const dt = Math.min(2, (ts-lastTime)/16.6667);
+    lastTime = ts;
+
+    if(!paused){
+      // physics
+      P.vy += gravity*dt;
+      P.y += P.vy*dt;
+      if(P.y >= GROUND_Y-groundH){
+        P.y = GROUND_Y-groundH;
+        if(!P.onGround){
+          // just landed — squash on impact + a small dust burst
+          P.squashX = 1.28;
+          P.squashY = 0.72;
+          spawnDustBurst(6);
+        }
+        P.vy = 0;
+        P.onGround = true;
+      }
+      P.wasOnGround = P.onGround;
+      P.rot += (P.onGround ? 0.055 : 0.13)*dt;
+      // ease squash/stretch back toward normal (1,1) — classic squash & stretch feel
+      P.squashX += (1 - P.squashX) * 0.22 * dt;
+      P.squashY += (1 - P.squashY) * 0.22 * dt;
+
+      trail.push({ x:P.x, y:P.y, rot:P.rot });
+      if(trail.length > 6) trail.shift();
+
+      // continuous dash streak trail — more/longer streaks while airborne
+      const dashChance = P.onGround ? 0.55 : 0.95;
+      if(Math.random() < dashChance*dt){
+        dashParticles.push({
+          x: P.x + 2, y: P.y + P.h*0.2 + Math.random()*P.h*0.6,
+          vx: -0.4 - Math.random()*0.5, vy: (Math.random()-0.5)*0.4,
+          len: 10 + Math.random()*16, alpha: 0.8, dust:false, grav:false
+        });
+      }
+
+      speed = Math.min(levelCfg.speedMax, speed + 0.0015*dt);
+      const dx = speed*dt;
+      travel += dx;
+
+      obstacles.forEach(o => o.x -= dx);
+      coins.forEach(c => c.x -= dx);
+      obstacles = obstacles.filter(o => o.x > -60);
+      coins = coins.filter(c => c.x > -40 && !c.collected);
+      bgShapes.forEach(s => { s.x -= s.sp*dt; if(s.x < -30) s.x = CW+30; });
+      clouds.forEach(c => { c.x -= c.sp*dt; if(c.x < -60) c.x = CW+60; });
+
+      dashParticles.forEach(p=>{
+        p.x += (p.vx - dx*0.15)*dt;
+        p.y += p.vy*dt;
+        if(p.grav) p.vy += gravity*0.25*dt;
+        p.alpha -= (p.dust ? 0.045 : 0.05)*dt;
+      });
+      dashParticles = dashParticles.filter(p => p.alpha > 0 && p.x > -50);
+
+      spawnAt -= dx;
+      if(spawnAt <= 0 && questionIndex < 10){
+        spawnEntity();
+        spawnAt = randInt(levelCfg.spawnMin, levelCfg.spawnMax);
+      }
+
+      // collisions: obstacles
+      const now = performance.now();
+      const pBox = { x:P.x+6, y:P.y+6, w:P.w-12, h:P.h-12 };
+      if(now > P.invUntil){
+        for(const o of obstacles){
+          const oBox = { x:o.x, y:GROUND_Y-o.h, w:o.w, h:o.h };
+          if(rectsOverlap(pBox,oBox)){
+            lives -= 1;
+            P.invUntil = now + 1200;
+            sfxHit();
+            updateHud();
+            if(lives <= 0){
+              endGame();
+              return;
+            }
+            break;
+          }
+        }
+      }
+      // collisions: coins
+      for(const c of coins){
+        if(c.collected) continue;
+        const dxp = (P.x+P.w/2) - c.x;
+        const dyp = (P.y+P.h/2) - c.y;
+        if(Math.sqrt(dxp*dxp+dyp*dyp) < c.r + 18){
+          c.collected = true;
+          sfxCoin();
+          openQuestion();
+          break;
+        }
+      }
+    }
+
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function rectsOverlap(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+  }
+
+  function render(){
+    ctx.clearRect(0,0,CW,CH);
+
+    // sky
+    const sky = ctx.createLinearGradient(0,0,0,GROUND_Y);
+    sky.addColorStop(0, "#7DD8F7");
+    sky.addColorStop(0.55, "#B9EAFB");
+    sky.addColorStop(1, "#EFFBFF");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,CW,GROUND_Y);
+
+    // sun
+    ctx.save();
+    const sunG = ctx.createRadialGradient(CW-70,54,4,CW-70,54,60);
+    sunG.addColorStop(0,"rgba(255,230,120,0.95)");
+    sunG.addColorStop(1,"rgba(255,230,120,0)");
+    ctx.fillStyle = sunG;
+    ctx.beginPath(); ctx.arc(CW-70,54,60,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#FFE066";
+    ctx.beginPath(); ctx.arc(CW-70,54,22,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // clouds
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    clouds.forEach(c=>{
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.s*0.7, 0, Math.PI*2);
+      ctx.arc(c.x+c.s*0.7, c.y+4, c.s*0.55, 0, Math.PI*2);
+      ctx.arc(c.x-c.s*0.7, c.y+6, c.s*0.5, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+
+    // playful floating shapes (triangles, parallelograms, trapezoids)
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    bgShapes.forEach(s=>{
+      ctx.fillStyle = s.color;
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if(s.kind === "tri"){
+        ctx.moveTo(s.x, s.y-s.s); ctx.lineTo(s.x-s.s, s.y+s.s); ctx.lineTo(s.x+s.s, s.y+s.s); ctx.closePath();
+      } else if(s.kind === "para"){
+        ctx.moveTo(s.x-s.s, s.y+s.s*0.6); ctx.lineTo(s.x-s.s*0.3, s.y-s.s*0.6); ctx.lineTo(s.x+s.s, s.y-s.s*0.6); ctx.lineTo(s.x+s.s*0.3, s.y+s.s*0.6); ctx.closePath();
+      } else {
+        ctx.moveTo(s.x-s.s, s.y+s.s*0.6); ctx.lineTo(s.x-s.s*0.4, s.y-s.s*0.6); ctx.lineTo(s.x+s.s*0.4, s.y-s.s*0.6); ctx.lineTo(s.x+s.s, s.y+s.s*0.6); ctx.closePath();
+      }
+      ctx.globalAlpha = 0.18;
+      ctx.fill();
+      ctx.globalAlpha = 0.55;
+      ctx.stroke();
+    });
+    ctx.restore();
+
+    // ground: grassy hill with a dirt strip
+    const grassGrad = ctx.createLinearGradient(0,GROUND_Y,0,GROUND_Y+18);
+    grassGrad.addColorStop(0, "#8CE07A");
+    grassGrad.addColorStop(1, "#5FC85B");
+    ctx.fillStyle = grassGrad;
+    ctx.fillRect(0,GROUND_Y,CW,18);
+    const dirtGrad = ctx.createLinearGradient(0,GROUND_Y+18,0,CH);
+    dirtGrad.addColorStop(0, "#C99A5B");
+    dirtGrad.addColorStop(1, "#9C7440");
+    ctx.fillStyle = dirtGrad;
+    ctx.fillRect(0,GROUND_Y+18,CW,CH-(GROUND_Y+18));
+    ctx.strokeStyle = "#3FA648";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,GROUND_Y); ctx.lineTo(CW,GROUND_Y); ctx.stroke();
+
+    // obstacles (friendly candy-cone spikes)
+    obstacles.forEach(o=>{
+      const og = ctx.createLinearGradient(o.x, GROUND_Y-o.h, o.x, GROUND_Y);
+      og.addColorStop(0, "#FF8A65");
+      og.addColorStop(1, "#E5473A");
+      ctx.fillStyle = og;
+      ctx.beginPath();
+      ctx.moveTo(o.x, GROUND_Y);
+      ctx.lineTo(o.x+o.w/2, GROUND_Y-o.h);
+      ctx.lineTo(o.x+o.w, GROUND_Y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#B23A2E";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // coins
+    coins.forEach(c=>{
+      const bobY = c.y + Math.sin((performance.now()/280)+c.bob)*4;
+      ctx.beginPath();
+      ctx.arc(c.x, bobY, c.r, 0, Math.PI*2);
+      ctx.fillStyle = "#FFC857";
+      ctx.fill();
+      ctx.strokeStyle = "#0E1226";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "#0E1226";
+      ctx.font = "bold 15px Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", c.x, bobY+1);
+    });
+
+    // dash effect — speed streaks while running/jumping, plus dust puffs on takeoff/landing
+    dashParticles.forEach(p=>{
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      if(p.dust){
+        ctx.fillStyle = "#EFE6D0";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.len, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        const grad = ctx.createLinearGradient(p.x, p.y, p.x+p.len, p.y);
+        grad.addColorStop(0, "rgba(63,224,208,0)");
+        grad.addColorStop(1, "#3FE0D0");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x+p.len, p.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    // motion trail — faint afterimages of recent positions for a sense of speed
+    for(let i=0;i<trail.length-1;i++){
+      const t = trail[i];
+      const alpha = ((i+1)/trail.length) * 0.16;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(t.x+P.w/2, t.y+P.h/2);
+      ctx.rotate(t.rot % (Math.PI*2));
+      ctx.fillStyle = "#3FE0D0";
+      roundRect(ctx, -P.w/2, -P.h/2, P.w, P.h, 8);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // player
+    ctx.save();
+    const now = performance.now();
+    const flashing = now < P.invUntil && Math.floor(now/100)%2===0;
+    ctx.translate(P.x+P.w/2, P.y+P.h/2);
+    ctx.rotate(P.rot % (Math.PI*2));
+    ctx.scale(P.squashX, P.squashY);
+    ctx.globalAlpha = flashing ? 0.35 : 1;
+    const pg = ctx.createLinearGradient(-P.w/2,-P.h/2,P.w/2,P.h/2);
+    pg.addColorStop(0,"#3FE0D0");
+    pg.addColorStop(1,"#FF5D8F");
+    ctx.fillStyle = pg;
+    roundRect(ctx, -P.w/2, -P.h/2, P.w, P.h, 8);
+    ctx.fill();
+    ctx.fillStyle = "#0E1226";
+    ctx.beginPath(); ctx.arc(-6,-4,3.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(8,-4,3.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(1,7,7,0,Math.PI,false); ctx.stroke();
+    ctx.restore();
+  }
+
+  function roundRect(c,x,y,w,h,r){
+    c.beginPath();
+    c.moveTo(x+r,y);
+    c.arcTo(x+w,y,x+w,y+h,r);
+    c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);
+    c.arcTo(x,y,x+w,y,r);
+    c.closePath();
+  }
+
+  /* ---------- Question overlay logic ---------- */
+  let qTimerInterval = null;
+  let qTimeLeft = 0;
+  let qTimeTotal = 0;
+
+  function openQuestion(){
+    paused = true;
+    const q = questions[questionIndex];
+    document.getElementById("q-num-label").textContent = `Question ${questionIndex+1} of 10`;
+    document.getElementById("q-svg-wrap").innerHTML = q.svg;
+    document.getElementById("q-prompt").textContent = q.prompt;
+    document.getElementById("q-unit").textContent = q.unit;
+    const input = document.getElementById("q-input");
+    input.value = "";
+    const fb = document.getElementById("q-feedback");
+    fb.className = "q-feedback";
+    fb.textContent = "";
+    document.getElementById("q-overlay").classList.add("show");
+    setTimeout(()=> input.focus(), 50);
+    if(autoRead) speak(q.prompt);
+
+    qTimeTotal = levelCfg.questionTime;
+    qTimeLeft = qTimeTotal;
+    updateTimerUI();
+    clearInterval(qTimerInterval);
+    qTimerInterval = setInterval(()=>{
+      qTimeLeft -= 0.2;
+      if(qTimeLeft <= 0){
+        qTimeLeft = 0;
+        updateTimerUI();
+        clearInterval(qTimerInterval);
+        resolveAnswer(null, true);
+        return;
+      }
+      updateTimerUI();
+    }, 200);
+  }
+
+  function updateTimerUI(){
+    const pct = Math.max(0, (qTimeLeft/qTimeTotal)*100);
+    const bar = document.getElementById("timer-bar");
+    bar.style.width = pct + "%";
+    const low = pct < 25;
+    bar.style.background = low ? "linear-gradient(90deg,#FF6B5B,#FF5D8F)" : "linear-gradient(90deg,#6BE38A,#FFC857)";
+    const label = document.getElementById("q-timer-label");
+    label.textContent = "⏱ " + Math.ceil(qTimeLeft) + "s";
+    label.classList.toggle("low", low);
+  }
+
+  const CORRECT_PHRASES = [
+    "Great job!", "You nailed it!", "Excellent work!", "Awesome, that's correct!",
+    "You got it!", "Fantastic!", "Nice math skills!", "Correct! Keep it up!",
+    "Super! You solved it!", "Way to go!"
+  ];
+  const WRONG_PHRASES = [
+    "Not quite — keep trying!", "Almost! Check the formula again.", "Oops, that's not it.",
+    "Keep practicing, you'll get it!", "Good effort, but not correct.", "So close! Try again next time.",
+    "Not this time — review the shape's formula."
+  ];
+
+  function resolveAnswer(rawVal, timedOut){
+    clearInterval(qTimerInterval);
+    const q = questions[questionIndex];
+    const fb = document.getElementById("q-feedback");
+    let isCorrect = false;
+    if(!timedOut && rawVal !== null && rawVal !== ""){
+      const val = parseFloat(rawVal);
+      if(!isNaN(val) && Math.abs(val - q.answer) < 0.05){
+        isCorrect = true;
+      }
+    }
+    if(isCorrect){
+      correctCount++;
+      score += levelCfg.pointsCorrect;
+      fb.className = "q-feedback correct";
+      fb.textContent = pick(CORRECT_PHRASES) + " +" + levelCfg.pointsCorrect + " points.";
+      sfxCorrect();
+      fireConfetti(16);
+    } else {
+      fb.className = "q-feedback wrong";
+      const lead = timedOut ? "Time's up! " : pick(WRONG_PHRASES) + " ";
+      fb.textContent = lead + `The correct answer is ${formatNum(q.answer)} ${q.unit}.`;
+      sfxWrong();
+      shakeEl(document.querySelector(".q-card"));
+    }
+    if(autoRead) speak(fb.textContent);
+    document.getElementById("q-submit").disabled = true;
+    updateHud();
+
+    setTimeout(()=>{
+      document.getElementById("q-submit").disabled = false;
+      document.getElementById("q-overlay").classList.remove("show");
+      questionIndex++;
+      updateHud();
+      if(questionIndex >= 10){
+        endGame();
+      } else {
+        giveSafeRunway();
+        paused = false;
+      }
+    }, 1500);
+  }
+
+  // After a question closes, guarantee the player has plenty of clear space
+  // before the next spike — nothing should ambush them right as play resumes.
+  function giveSafeRunway(){
+    const SAFE_GAP = 280;
+    obstacles.forEach(o=>{
+      if(o.x < P.x + SAFE_GAP){
+        o.x = P.x + SAFE_GAP + Math.random()*100;
+      }
+    });
+    spawnAt = Math.max(spawnAt, levelCfg.spawnMax * 1.4);
+  }
+
+  function formatNum(n){
+    return Math.round(n*100)/100;
+  }
+
+  document.getElementById("q-submit").addEventListener("click", ()=>{
+    if(document.getElementById("q-submit").disabled) return;
+    resolveAnswer(document.getElementById("q-input").value, false);
+  });
+  document.getElementById("q-input").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      if(!document.getElementById("q-submit").disabled){
+        resolveAnswer(document.getElementById("q-input").value, false);
+      }
+    }
+  });
+
+  async function endGame(){
+    running = false;
+    paused = false;
+    clearInterval(qTimerInterval);
+    cancelAnimationFrame(rafId);
+    stopMusic();
+    sfxGameOver();
+    releaseOrientation();
+    document.getElementById("q-overlay").classList.remove("show");
+
+    const timeMs = Math.round(performance.now() - runStartTime);
+    const levelNum = levelKey === "hard" ? "Level 2" : "Level 1";
+
+    document.getElementById("result-level-complete").textContent = `${levelNum} Complete!`;
+    const nameEl = document.getElementById("result-player-name");
+    nameEl.textContent = player.section ? `${player.name} — ${player.section}` : player.name;
+    const headlineEl = document.getElementById("result-headline");
+    if(correctCount >= 8){
+      headlineEl.textContent = "🎉 Congratulations!";
+      headlineEl.style.color = "var(--green)";
+    } else {
+      headlineEl.textContent = "Better luck next time!";
+      headlineEl.style.color = "var(--amber)";
+    }
+
+    document.getElementById("result-score").textContent = "0";
+    document.getElementById("result-correct").textContent = `${correctCount}/10`;
+    document.getElementById("result-level").textContent = levelCfg.label;
+    document.getElementById("result-accuracy").textContent = Math.round((correctCount/10)*100) + "%";
+    document.getElementById("result-time").textContent = formatTime(timeMs);
+    document.getElementById("result-save-note").textContent = "Saving your score to the leaderboard…";
+
+    const unlockMsgEl = document.getElementById("unlock-msg");
+    const nextBtn = document.getElementById("btn-result-next");
+    unlockMsgEl.style.display = "none";
+    unlockMsgEl.className = "unlock-msg";
+    nextBtn.style.display = "none";
+
+    if(levelKey === "easy"){
+      if(correctCount >= 8){
+        unlockedHard = true;
+        unlockMsgEl.textContent = "🎉 Great job! Level 2: Difficult is now unlocked.";
+        unlockMsgEl.style.cssText = "display:block; background:rgba(107,227,138,.16); color:var(--green);";
+        nextBtn.style.display = "inline-block";
+      } else {
+        unlockMsgEl.textContent = `Score 8/10 or higher on Easy to unlock Level 2. You got ${correctCount}/10 — try again!`;
+        unlockMsgEl.style.cssText = "display:block; background:rgba(255,200,87,.14); color:var(--amber);";
+      }
+    }
+
+    showScreen("screen-result");
+    animateCountUp(document.getElementById("result-score"), score, 900);
+    if(correctCount >= 8) setTimeout(()=> fireConfetti(70), 150);
+
+    const entry = {
+      name: player.name || "Player",
+      section: player.section || "",
+      score: score,
+      level: levelKey,
+      correct: correctCount,
+      timeMs: timeMs,
+      date: Date.now()
+    };
+    const saved = await saveScoreToLeaderboard(entry);
+    document.getElementById("result-save-note").textContent = saved ? "Score saved to the online leaderboard." : "Couldn't reach the leaderboard, but your score still counts!";
+  }
+
+  /* ---------- init ---------- */
+  refreshLeaderboardUI();
+  startLeaderboardPolling();
+
+})();
+</script>
+</body>
+</html>
